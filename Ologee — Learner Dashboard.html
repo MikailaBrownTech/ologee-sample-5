@@ -1,0 +1,1265 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ologee — Learner Dashboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap">
+
+<style>
+/* ── Design Language ─────────────────────────────────────────
+   Sidebar: near-black, ultra-minimal, no icon clutter
+   Content: warm off-white canvas, floating surfaces with subtle shadow
+   Type: DM Serif Display for display moments, Inter for everything UI
+   Motion: subtle 120ms eases, no bounce
+   Radius: 12px cards, 8px controls — consistent, not rounded-xl everywhere
+──────────────────────────────────────────────────────────── */
+:root {
+  --black:    #0F0F0D;
+  --ink:      #1A1A18;
+  --ink-2:    #28281E;   /* sidebar hover */
+  --emerald:  #187A49;
+  --em-mid:   #1F9A5E;
+  --em-light: #E8F5EE;
+  --gold:     #B8922E;
+  --gold-lt:  #FDF4E0;
+
+  --canvas:   #F5F4F0;   /* page bg — warm off-white */
+  --surface:  #FFFFFF;
+  --surface-2:#F9F8F5;
+  --line:     #E8E7E2;
+  --fg:       #18181A;
+  --fg-2:     #636360;
+  --fg-3:     #A8A8A4;
+
+  --sidebar-w: 220px;
+  --r: 12px;
+  --r-sm: 8px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas:   #111110;
+    --surface:  #1A1A18;
+    --surface-2:#222220;
+    --line:     #2E2E2C;
+    --fg:       #EEECEA;
+    --fg-2:     #909088;
+    --fg-3:     #5A5A56;
+    --em-light: #0D2418;
+    --gold-lt:  #261D08;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --canvas:   #111110;
+  --surface:  #1A1A18;
+  --surface-2:#222220;
+  --line:     #2E2E2C;
+  --fg:       #EEECEA;
+  --fg-2:     #909088;
+  --fg-3:     #5A5A56;
+  --em-light: #0D2418;
+  --gold-lt:  #261D08;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; }
+a { text-decoration: none; }
+
+body {
+  background: var(--canvas);
+  color: var(--fg);
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════
+   SIDEBAR — dark, stripped, intentional
+   ═══════════════════════════════════════ */
+.sidebar {
+  position: fixed; inset: 0 auto 0 0;
+  width: var(--sidebar-w);
+  background: var(--black);
+  display: flex; flex-direction: column;
+  z-index: 200;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-logo {
+  padding: 26px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.logo-mark {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.25rem;
+  color: #fff;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.logo-sub {
+  margin-top: 3px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--emerald);
+}
+
+.nav-section {
+  padding: 20px 12px 0;
+}
+.nav-label {
+  padding: 0 8px 8px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.44);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+  position: relative;
+  white-space: nowrap;
+}
+.nav-item:hover  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.82); }
+.nav-item.active { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 25%; bottom: 25%;
+  width: 2px; border-radius: 2px;
+  background: var(--emerald);
+}
+.nav-icon { font-size: 0.9rem; opacity: 0.9; flex-shrink: 0; line-height: 1; }
+.nav-badge {
+  margin-left: auto;
+  min-width: 17px; height: 17px;
+  background: var(--emerald);
+  border-radius: 99px;
+  font-size: 0.58rem; font-weight: 700;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 5px;
+}
+
+.sidebar-spacer { flex: 1; min-height: 24px; }
+
+.sidebar-user {
+  margin: 0 12px 16px;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-user:hover { background: rgba(255,255,255,0.04); }
+.av {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--emerald);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; color: #fff;
+  flex-shrink: 0; letter-spacing: 0.02em;
+}
+.u-name { font-size: 0.76rem; font-weight: 600; color: rgba(255,255,255,0.82); line-height: 1.2; }
+.u-role { font-size: 0.6rem; color: rgba(255,255,255,0.3); margin-top: 1px; }
+
+/* ═══════════════════════════════════════
+   MAIN
+   ═══════════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Topbar */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--line);
+  height: 56px;
+  display: flex; align-items: center;
+  padding-left: max(28px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  gap: 12px;
+}
+.topbar-title {
+  flex: 1;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.topbar-title em { font-style: normal; color: var(--emerald); }
+.topbar-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+.icon-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; color: var(--fg-2);
+  cursor: pointer; position: relative;
+  transition: border-color 0.12s, background 0.12s;
+}
+.icon-btn:hover { background: var(--surface-2); border-color: var(--fg-3); }
+.icon-btn .dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--emerald);
+  border: 1.5px solid var(--canvas);
+}
+
+.btn-em {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 0 15px; height: 34px;
+  border-radius: var(--r-sm);
+  background: var(--emerald); color: #fff;
+  font-size: 0.75rem; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+}
+.btn-em:hover { background: var(--em-mid); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 0 14px; height: 32px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg-2);
+  font-size: 0.74rem; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.btn-ghost:hover { background: var(--surface); color: var(--fg); }
+
+/* Canvas */
+.canvas {
+  flex: 1;
+  padding: 28px max(28px, env(safe-area-inset-right, 0px)) 48px max(28px, env(safe-area-inset-left, 0px));
+}
+
+/* Tabs */
+.tab { display: none; }
+.tab.active { display: block; }
+
+/* ── Type helpers ── */
+.serif { font-family: 'DM Serif Display', Georgia, serif; }
+.eyebrow {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--fg-3);
+}
+.section-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-row h2 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.05rem; font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.see-all {
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--emerald); cursor: pointer;
+}
+.see-all:hover { text-decoration: underline; }
+
+/* ── Surface card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.card-pad { padding: 20px 22px; }
+
+/* ── Pill ── */
+.pill {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 99px;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.pill-em  { background: var(--em-light); color: var(--emerald); }
+.pill-gld { background: var(--gold-lt); color: var(--gold); }
+.pill-neu { background: var(--surface-2); color: var(--fg-2); border: 1px solid var(--line); }
+
+/* ── Progress bar ── */
+.prog-bar { height: 3px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--emerald); border-radius: 99px; }
+
+/* ═══════════════════════════════════════
+   KPI STRIP — minimal, editorial
+   ═══════════════════════════════════════ */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.kpi {
+  background: var(--surface);
+  padding: 18px 20px;
+}
+.kpi-num {
+  font-size: 1.9rem; font-weight: 700;
+  line-height: 1; letter-spacing: -0.03em;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.kpi-lbl { font-size: 0.65rem; color: var(--fg-3); margin-top: 5px; font-weight: 500; }
+.kpi-delta { font-size: 0.68rem; color: var(--emerald); margin-top: 3px; font-weight: 600; }
+
+/* ═══════════════════════════════════════
+   COURSE CARDS
+   ═══════════════════════════════════════ */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.course-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.course-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.07); transform: translateY(-2px); }
+
+.course-thumb {
+  height: 100px;
+  position: relative;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 12px 14px;
+}
+.thumb-label {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 0.85rem; color: #fff;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  line-height: 1.25;
+  text-wrap: balance;
+  position: relative; z-index: 1;
+}
+.course-thumb::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.45), transparent 60%);
+}
+
+.course-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.course-name { font-size: 0.8rem; font-weight: 600; color: var(--fg); }
+.course-meta { font-size: 0.68rem; color: var(--fg-3); }
+.prog-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.prog-pct { font-size: 0.67rem; font-weight: 700; color: var(--emerald); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+.course-foot {
+  padding: 10px 16px 14px;
+  display: flex; gap: 7px;
+}
+.cont-btn {
+  flex: 1; height: 32px;
+  background: var(--fg); color: var(--canvas);
+  border-radius: var(--r-sm);
+  font-size: 0.73rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+}
+.cont-btn:hover { background: var(--emerald); }
+.cont-btn.gold { background: var(--gold); color: #fff; }
+.bk-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; cursor: pointer;
+  transition: all 0.12s;
+}
+.bk-btn:hover { border-color: var(--fg-3); background: var(--surface); }
+
+/* ═══════════════════════════════════════
+   CERT BANNER
+   ═══════════════════════════════════════ */
+.cert-banner {
+  border-radius: var(--r);
+  background: var(--ink);
+  padding: 20px 24px;
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+.cert-banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 0% 50%, rgba(24,122,73,0.3) 0%, transparent 65%);
+  pointer-events: none;
+}
+.cert-icon { font-size: 1.8rem; flex-shrink: 0; position: relative; z-index: 1; }
+.cert-copy { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.cert-copy h3 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 0.95rem; font-weight: 400; color: #fff;
+}
+.cert-copy p { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+/* ═══════════════════════════════════════
+   QUICK ACCESS
+   ═══════════════════════════════════════ */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.quick-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px 14px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: box-shadow 0.13s, border-color 0.13s;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.quick-item:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-color: var(--fg-3); }
+.quick-icon { font-size: 1.3rem; }
+.quick-label { font-size: 0.73rem; font-weight: 600; color: var(--fg); }
+
+/* ═══════════════════════════════════════
+   BROWSE / AVAILABLE COURSES
+   ═══════════════════════════════════════ */
+.filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.filter-chip {
+  padding: 5px 12px; border-radius: 99px;
+  font-size: 0.68rem; font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg-2);
+  cursor: pointer; transition: all 0.11s;
+}
+.filter-chip:hover { border-color: var(--fg-3); color: var(--fg); }
+.filter-chip.on { background: var(--fg); color: var(--canvas); border-color: var(--fg); }
+
+.avail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.avail-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.14s, transform 0.14s;
+}
+.avail-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.07); transform: translateY(-2px); }
+.avail-thumb {
+  height: 84px; position: relative;
+  display: flex; align-items: flex-end; padding: 10px 12px;
+}
+.avail-thumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent 55%); }
+.avail-thumb span { position: relative; z-index: 1; font-family: 'DM Serif Display', Georgia, serif; font-size: 0.8rem; color: #fff; text-shadow: 0 1px 5px rgba(0,0,0,0.5); }
+.avail-body { padding: 12px 14px; }
+.avail-name { font-size: 0.78rem; font-weight: 600; color: var(--fg); margin-bottom: 2px; }
+.avail-meta { font-size: 0.66rem; color: var(--fg-3); margin-bottom: 10px; }
+.avail-foot { display: flex; align-items: center; justify-content: space-between; }
+.avail-price { font-size: 0.9rem; font-weight: 700; color: var(--fg); font-variant-numeric: tabular-nums; }
+.avail-price.free { color: var(--emerald); }
+
+/* ═══════════════════════════════════════
+   SAVED ITEMS
+   ═══════════════════════════════════════ */
+.saved-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.saved-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.saved-thumb { height: 78px; position: relative; display: flex; align-items: flex-end; padding: 8px 12px; }
+.saved-thumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top,rgba(0,0,0,0.4),transparent 55%); }
+.saved-thumb span { position: relative; z-index: 1; font-family: 'DM Serif Display', Georgia, serif; font-size: 0.78rem; color: #fff; }
+.saved-body { padding: 12px 14px; flex: 1; }
+.saved-name { font-size: 0.78rem; font-weight: 600; color: var(--fg); margin-bottom: 2px; }
+.saved-meta { font-size: 0.66rem; color: var(--fg-3); }
+.saved-foot { display: flex; gap: 6px; padding: 0 14px 12px; }
+.saved-foot button { flex: 1; height: 30px; border-radius: var(--r-sm); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: all 0.11s; }
+.saved-foot .enroll { background: var(--fg); color: var(--canvas); border: none; }
+.saved-foot .enroll:hover { background: var(--emerald); }
+.saved-foot .remove { background: none; border: 1px solid var(--line); color: var(--fg-2); }
+.saved-foot .remove:hover { border-color: var(--fg-3); color: var(--fg); }
+
+/* ═══════════════════════════════════════
+   DOCUMENTS
+   ═══════════════════════════════════════ */
+.doc-section-label {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--fg-3); margin-bottom: 14px;
+}
+.doc-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.doc-row:last-child { border-bottom: none; }
+.doc-ico {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.doc-ico.cert   { background: var(--gold-lt); }
+.doc-ico.report { background: var(--em-light); }
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 0.78rem; font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-date { font-size: 0.65rem; color: var(--fg-3); margin-top: 2px; }
+.doc-action { font-size: 0.7rem; font-weight: 600; color: var(--emerald); flex-shrink: 0; cursor: pointer; }
+
+/* ═══════════════════════════════════════
+   ACHIEVEMENTS
+   ═══════════════════════════════════════ */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 12px;
+}
+.badge-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 20px 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  text-align: center;
+}
+.badge-card.locked { opacity: 0.4; filter: saturate(0); }
+.badge-em { font-size: 2rem; }
+.badge-name { font-size: 0.74rem; font-weight: 700; color: var(--fg); }
+.badge-desc { font-size: 0.63rem; color: var(--fg-3); line-height: 1.45; }
+
+/* ═══════════════════════════════════════
+   DISCUSSION
+   ═══════════════════════════════════════ */
+.thread-row {
+  display: flex; gap: 12px; padding: 15px 0;
+  border-bottom: 1px solid var(--line); cursor: pointer;
+}
+.thread-row:last-child { border-bottom: none; }
+.thread-row:hover .thread-title { color: var(--emerald); }
+.thread-av {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 700; color: var(--fg-2);
+  flex-shrink: 0; margin-top: 1px;
+}
+.thread-body { flex: 1; min-width: 0; }
+.thread-course { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--emerald); margin-bottom: 2px; }
+.thread-title  { font-size: 0.78rem; font-weight: 600; color: var(--fg); margin-bottom: 3px; transition: color 0.12s; }
+.thread-prev   { font-size: 0.7rem; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thread-meta   { font-size: 0.62rem; color: var(--fg-3); margin-top: 4px; }
+.thread-right  { flex-shrink: 0; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.thread-time   { font-size: 0.63rem; color: var(--fg-3); }
+.unread-pip    { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); }
+
+/* ═══════════════════════════════════════
+   NOTIFICATIONS
+   ═══════════════════════════════════════ */
+.notif-row {
+  display: flex; gap: 12px; padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.notif-row:last-child { border-bottom: none; }
+.notif-pip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.notif-pip.new  { background: var(--emerald); }
+.notif-pip.read { background: var(--line); }
+.notif-body { flex: 1; min-width: 0; }
+.notif-title { font-size: 0.78rem; font-weight: 600; color: var(--fg); margin-bottom: 2px; }
+.notif-sub   { font-size: 0.7rem; color: var(--fg-2); line-height: 1.5; }
+.notif-time  { font-size: 0.63rem; color: var(--fg-3); flex-shrink: 0; }
+
+/* ═══════════════════════════════════════
+   PROFILE
+   ═══════════════════════════════════════ */
+.field-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  margin-bottom: 18px;
+}
+.fg-full { grid-column: span 2; }
+.field-lbl { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 5px; }
+.field-inp {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--fg);
+  font-size: 0.8rem;
+  outline: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+.field-inp:focus { border-color: var(--emerald); background: var(--surface); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-text .tl { font-size: 0.8rem; font-weight: 600; color: var(--fg); }
+.toggle-text .td { font-size: 0.68rem; color: var(--fg-3); margin-top: 1px; }
+.toggle {
+  width: 38px; height: 21px; border-radius: 99px; position: relative;
+  flex-shrink: 0; cursor: pointer; transition: background 0.14s;
+}
+.toggle.on  { background: var(--emerald); }
+.toggle.off { background: var(--line); }
+.toggle-knob {
+  position: absolute; top: 3px;
+  width: 15px; height: 15px; border-radius: 50%; background: #fff;
+  transition: left 0.14s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on  .toggle-knob { left: 20px; }
+.toggle.off .toggle-knob { left: 3px; }
+
+/* ═══════════════════════════════════════
+   SUPPORT
+   ═══════════════════════════════════════ */
+.support-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(188px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.support-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 20px 18px;
+  display: flex; flex-direction: column; gap: 7px;
+  cursor: pointer; transition: box-shadow 0.13s, border-color 0.13s;
+}
+.support-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); border-color: var(--fg-3); }
+.support-ico   { font-size: 1.4rem; }
+.support-title { font-size: 0.82rem; font-weight: 700; color: var(--fg); }
+.support-desc  { font-size: 0.7rem; color: var(--fg-2); line-height: 1.5; }
+.support-cta   { font-size: 0.7rem; font-weight: 600; color: var(--emerald); margin-top: auto; padding-top: 4px; }
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════ */
+@media (max-width: 720px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { transform: translateX(-100%); width: 220px; transition: transform 0.2s; }
+  .sidebar.open { transform: translateX(0); }
+  .ham { display: flex !important; }
+  .field-grid { grid-template-columns: 1fr; }
+  .fg-full { grid-column: span 1; }
+}
+.ham {
+  display: none; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: var(--r-sm); border: 1px solid var(--line);
+  background: var(--surface); font-size: 1rem; color: var(--fg-2);
+  cursor: pointer; flex-shrink: 0;
+}
+</style>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">Ologee</div>
+    <div class="logo-sub">Restorative Learning</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Learning</div>
+    <div class="nav-item active" onclick="go('overview',this)"><span class="nav-icon">⊞</span>Dashboard</div>
+    <div class="nav-item" onclick="go('courses',this)"><span class="nav-icon">▶</span>My Courses</div>
+    <div class="nav-item" onclick="go('browse',this)"><span class="nav-icon">◎</span>Browse</div>
+    <div class="nav-item" onclick="go('saved',this)"><span class="nav-icon">🔖</span>Saved Items</div>
+  </div>
+
+  <div class="nav-section" style="margin-top:8px;">
+    <div class="nav-label">My Records</div>
+    <div class="nav-item" onclick="go('docs',this)"><span class="nav-icon">📁</span>My Documents</div>
+    <div class="nav-item" onclick="go('achievements',this)"><span class="nav-icon">🏅</span>Achievements</div>
+  </div>
+
+  <div class="nav-section" style="margin-top:8px;">
+    <div class="nav-label">Community</div>
+    <div class="nav-item" onclick="go('discussion',this)"><span class="nav-icon">💬</span>Discussion<span class="nav-badge">3</span></div>
+    <div class="nav-item" onclick="go('notifications',this)"><span class="nav-icon">🔔</span>Notifications<span class="nav-badge">5</span></div>
+  </div>
+
+  <div class="nav-section" style="margin-top:8px;">
+    <div class="nav-label">Account</div>
+    <div class="nav-item" onclick="go('profile',this)"><span class="nav-icon">👤</span>Profile</div>
+    <div class="nav-item" onclick="go('support',this)"><span class="nav-icon">🛟</span>Support</div>
+  </div>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-user">
+    <div class="av">JS</div>
+    <div>
+      <div class="u-name">Janelle S.</div>
+      <div class="u-role">Learner · TCPCS</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <button class="ham" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <div class="topbar-title" id="tb-title">Good evening, <em>Janelle</em></div>
+    <div class="topbar-actions">
+      <div class="icon-btn" onclick="go('notifications',null)" title="Notifications">🔔<span class="dot"></span></div>
+      <div class="icon-btn" onclick="go('discussion',null)" title="Messages">💬</div>
+      <button class="btn-em" onclick="go('browse',null)">Browse Courses</button>
+    </div>
+  </div>
+
+  <div class="canvas">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="tab active" id="tab-overview">
+
+      <!-- KPI strip -->
+      <div class="kpi-strip">
+        <div class="kpi">
+          <div class="kpi-num">4</div>
+          <div class="kpi-lbl">Enrolled</div>
+          <div class="kpi-delta">↑ 1 this month</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-num">18.5</div>
+          <div class="kpi-lbl">Hours logged</div>
+          <div class="kpi-delta">~3.2 hrs/wk</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-num">1</div>
+          <div class="kpi-lbl">Certificates</div>
+          <div class="kpi-delta">2 in progress</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-num">3</div>
+          <div class="kpi-lbl">Badges earned</div>
+          <div class="kpi-delta">1 new this week</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-num">7</div>
+          <div class="kpi-lbl">Saved items</div>
+        </div>
+      </div>
+
+      <!-- Continue learning -->
+      <div class="section-row">
+        <h2>Continue Learning</h2>
+        <span class="see-all" onclick="go('courses',null)">View all →</span>
+      </div>
+      <div class="course-grid">
+
+        <div class="course-card">
+          <div class="course-thumb" style="background:linear-gradient(135deg,#14302A,#1A7A4A)">
+            <div class="thumb-label">Foundations of Restorative Practice</div>
+          </div>
+          <div class="course-body">
+            <div class="course-name">Foundations of Restorative Practice</div>
+            <div class="course-meta">Module 3 of 6 · Dr. Amara Cole</div>
+            <div class="prog-row">
+              <div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:52%"></div></div>
+              <div class="prog-pct">52%</div>
+            </div>
+          </div>
+          <div class="course-foot">
+            <button class="cont-btn">▶ Continue</button>
+            <button class="bk-btn" title="Bookmarked">🔖</button>
+          </div>
+        </div>
+
+        <div class="course-card">
+          <div class="course-thumb" style="background:linear-gradient(135deg,#28183A,#5A3A7A)">
+            <div class="thumb-label">Matrilineal Genealogy Research</div>
+          </div>
+          <div class="course-body">
+            <div class="course-name">Matrilineal Genealogy Research</div>
+            <div class="course-meta">Module 1 of 5 · Nia Okafor, MA</div>
+            <div class="prog-row">
+              <div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:20%"></div></div>
+              <div class="prog-pct">20%</div>
+            </div>
+          </div>
+          <div class="course-foot">
+            <button class="cont-btn">▶ Continue</button>
+            <button class="bk-btn">🔖</button>
+          </div>
+        </div>
+
+        <div class="course-card">
+          <div class="course-thumb" style="background:linear-gradient(135deg,#182838,#2A5A7A)">
+            <div class="thumb-label">Healing-Centered Community Work</div>
+          </div>
+          <div class="course-body">
+            <div class="course-name">Healing-Centered Community Work</div>
+            <div class="course-meta">Module 5 of 5 · Vetra Griffin</div>
+            <div class="prog-row">
+              <div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:88%"></div></div>
+              <div class="prog-pct">88%</div>
+            </div>
+          </div>
+          <div class="course-foot">
+            <button class="cont-btn gold">Claim Certificate →</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Cert banner -->
+      <div class="cert-banner">
+        <div class="cert-icon">🏅</div>
+        <div class="cert-copy">
+          <h3>Certificate Ready to Claim</h3>
+          <p>You've completed <em style="font-style:italic;color:rgba(255,255,255,0.65)">Healing-Centered Community Work</em>. Download or save to My Documents.</p>
+        </div>
+        <button class="btn-em" style="position:relative;z-index:1" onclick="go('docs',null)">Claim Certificate</button>
+      </div>
+
+      <!-- Quick access -->
+      <div class="section-row"><h2>Quick Access</h2></div>
+      <div class="quick-grid">
+        <div class="quick-item" onclick="go('browse',null)"><span class="quick-icon">◎</span><span class="quick-label">Browse Courses</span></div>
+        <div class="quick-item" onclick="go('docs',null)"><span class="quick-icon">📁</span><span class="quick-label">My Documents</span></div>
+        <div class="quick-item" onclick="go('achievements',null)"><span class="quick-icon">🏅</span><span class="quick-label">Achievements</span></div>
+        <div class="quick-item" onclick="go('discussion',null)"><span class="quick-icon">💬</span><span class="quick-label">Discussion</span></div>
+        <div class="quick-item" onclick="go('saved',null)"><span class="quick-icon">🔖</span><span class="quick-label">Saved Items</span></div>
+        <div class="quick-item" onclick="go('support',null)"><span class="quick-icon">🛟</span><span class="quick-label">Support</span></div>
+      </div>
+    </div>
+
+    <!-- ── MY COURSES ── -->
+    <div class="tab" id="tab-courses">
+      <div class="section-row"><h2>My Enrolled Courses</h2><span class="pill pill-neu">4 active</span></div>
+      <div class="course-grid">
+        <div class="course-card">
+          <div class="course-thumb" style="background:linear-gradient(135deg,#14302A,#1A7A4A)">
+            <div class="thumb-label">Foundations of Restorative Practice</div>
+          </div>
+          <div class="course-body">
+            <div class="course-name">Foundations of Restorative Practice</div>
+            <div class="course-meta">Module 3 of 6 · Dr. Amara Cole</div>
+            <div class="prog-row"><div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:52%"></div></div><div class="prog-pct">52%</div></div>
+          </div>
+          <div class="course-foot"><button class="cont-btn">▶ Continue Module 3</button></div>
+        </div>
+        <div class="course-card">
+          <div class="course-thumb" style="background:linear-gradient(135deg,#28183A,#5A3A7A)">
+            <div class="thumb-label">Matrilineal Genealogy Research</div>
+          </div>
+          <div class="course-body">
+            <div class="course-name">Matrilineal Genealogy Research</div>
+            <div class="course-meta">Module 1 of 5 · Nia Okafor, MA</div>
+            <div class="prog-row"><div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:20%"></div></div><div class="prog-pct">20%</div></div>
+          </div>
+          <div class="course-foot"><button class="cont-btn">▶ Continue Module 1</button></div>
+        </div>
+        <div class="course-card">
+          <div class="course-thumb" style="background:linear-gradient(135deg,#182838,#2A5A7A)">
+            <div class="thumb-label">Healing-Centered Community Work</div>
+          </div>
+          <div class="course-body">
+            <div class="course-name">Healing-Centered Community Work</div>
+            <div class="course-meta">Module 5 of 5 · Vetra Griffin</div>
+            <div class="prog-row"><div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:88%"></div></div><div class="prog-pct">88%</div></div>
+          </div>
+          <div class="course-foot"><button class="cont-btn gold">Claim Certificate →</button></div>
+        </div>
+        <div class="course-card">
+          <div class="course-thumb" style="background:linear-gradient(135deg,#301808,#7A4A1A)">
+            <div class="thumb-label">Trauma-Informed Policy Advocacy</div>
+          </div>
+          <div class="course-body">
+            <div class="course-name">Trauma-Informed Policy Advocacy</div>
+            <div class="course-meta">Module 2 of 4 · Dr. Marcus Webb</div>
+            <div class="prog-row"><div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:37%"></div></div><div class="prog-pct">37%</div></div>
+          </div>
+          <div class="course-foot"><button class="cont-btn">▶ Continue Module 2</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BROWSE ── -->
+    <div class="tab" id="tab-browse">
+      <div class="section-row"><h2>Available Courses &amp; Programs</h2><button class="btn-ghost">Filter ▾</button></div>
+      <div class="filter-row">
+        <div class="filter-chip on">All</div>
+        <div class="filter-chip">Restorative Practice</div>
+        <div class="filter-chip">Matrilineal</div>
+        <div class="filter-chip">Community Healing</div>
+        <div class="filter-chip">Policy</div>
+        <div class="filter-chip">Free</div>
+      </div>
+      <div class="avail-grid">
+        <div class="avail-card">
+          <div class="avail-thumb" style="background:linear-gradient(135deg,#0A2218,#1A7A4A)"><span>Restorative Practice</span></div>
+          <div class="avail-body">
+            <div class="avail-name">Foundations of Restorative Practice</div>
+            <div class="avail-meta">6 modules · 4.5 hrs · Dr. Amara Cole</div>
+            <div class="avail-foot"><div class="avail-price">$79</div><span class="pill pill-em">Popular</span></div>
+          </div>
+        </div>
+        <div class="avail-card">
+          <div class="avail-thumb" style="background:linear-gradient(135deg,#28183A,#5A3A7A)"><span>Matrilineal Genealogy</span></div>
+          <div class="avail-body">
+            <div class="avail-name">Matrilineal Genealogy Research</div>
+            <div class="avail-meta">5 modules · 3.8 hrs · Nia Okafor, MA</div>
+            <div class="avail-foot"><div class="avail-price">$65</div><span class="pill pill-neu">New</span></div>
+          </div>
+        </div>
+        <div class="avail-card">
+          <div class="avail-thumb" style="background:linear-gradient(135deg,#181838,#383878)"><span>Oral Traditions</span></div>
+          <div class="avail-body">
+            <div class="avail-name">Oral Traditions &amp; Archival Methods</div>
+            <div class="avail-meta">3 modules · 2.5 hrs · Camille Broussard</div>
+            <div class="avail-foot"><div class="avail-price free">Free</div><span class="pill pill-gld">Featured</span></div>
+          </div>
+        </div>
+        <div class="avail-card">
+          <div class="avail-thumb" style="background:linear-gradient(135deg,#301808,#7A4A1A)"><span>Policy Advocacy</span></div>
+          <div class="avail-body">
+            <div class="avail-name">Trauma-Informed Policy Advocacy</div>
+            <div class="avail-meta">4 modules · 3.2 hrs · Dr. Marcus Webb</div>
+            <div class="avail-foot"><div class="avail-price">$59</div></div>
+          </div>
+        </div>
+        <div class="avail-card">
+          <div class="avail-thumb" style="background:linear-gradient(135deg,#0A1830,#1A3A4A)"><span>Care Economy</span></div>
+          <div class="avail-body">
+            <div class="avail-name">Care Economy &amp; Community Finance</div>
+            <div class="avail-meta">4 modules · 4.0 hrs · Nicole Bennett</div>
+            <div class="avail-foot"><div class="avail-price">$75</div></div>
+          </div>
+        </div>
+        <div class="avail-card">
+          <div class="avail-thumb" style="background:linear-gradient(135deg,#14302A,#22A060)"><span>Community Sovereignty</span></div>
+          <div class="avail-body">
+            <div class="avail-name">Community Sovereignty &amp; Governance</div>
+            <div class="avail-meta">5 modules · 5.0 hrs · Vetra Griffin</div>
+            <div class="avail-foot"><div class="avail-price">$89</div><span class="pill pill-em">Bestseller</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SAVED ── -->
+    <div class="tab" id="tab-saved">
+      <div class="section-row"><h2>Saved Items</h2><span class="pill pill-neu">7 items</span></div>
+      <div class="saved-grid">
+        <div class="saved-card">
+          <div class="saved-thumb" style="background:linear-gradient(135deg,#181838,#383878)"><span>Oral Traditions &amp; Archival Methods</span></div>
+          <div class="saved-body"><div class="saved-name">Oral Traditions &amp; Archival Methods</div><div class="saved-meta">3 modules · Free · Camille Broussard</div></div>
+          <div class="saved-foot"><button class="enroll">Enroll Free</button><button class="remove">Remove</button></div>
+        </div>
+        <div class="saved-card">
+          <div class="saved-thumb" style="background:linear-gradient(135deg,#0A1830,#1A3A4A)"><span>Care Economy &amp; Community Finance</span></div>
+          <div class="saved-body"><div class="saved-name">Care Economy &amp; Community Finance</div><div class="saved-meta">4 modules · $75 · Nicole Bennett</div></div>
+          <div class="saved-foot"><button class="enroll">Enroll — $75</button><button class="remove">Remove</button></div>
+        </div>
+        <div class="saved-card">
+          <div class="saved-thumb" style="background:linear-gradient(135deg,#14302A,#22A060)"><span>Community Sovereignty &amp; Governance</span></div>
+          <div class="saved-body"><div class="saved-name">Community Sovereignty &amp; Governance</div><div class="saved-meta">5 modules · $89 · Vetra Griffin</div></div>
+          <div class="saved-foot"><button class="enroll">Enroll — $89</button><button class="remove">Remove</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DOCUMENTS ── -->
+    <div class="tab" id="tab-docs">
+      <div class="section-row"><h2>My Documents</h2><button class="btn-ghost">+ Upload</button></div>
+      <div class="card card-pad" style="margin-bottom:16px;">
+        <div class="doc-section-label">Certificates Earned</div>
+        <div class="doc-row">
+          <div class="doc-ico cert">🏅</div>
+          <div class="doc-info">
+            <div class="doc-name">Certificate — Healing-Centered Community Work</div>
+            <div class="doc-date">Issued Oct 10, 2025 · Vetra Griffin</div>
+          </div>
+          <span class="pill pill-gld" style="flex-shrink:0">PDF</span>
+          <span class="doc-action" style="margin-left:12px">View</span>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div class="doc-section-label">Reports &amp; Resources</div>
+        <div class="doc-row">
+          <div class="doc-ico report">📊</div>
+          <div class="doc-info"><div class="doc-name">Learning Progress Report — Q3 2025</div><div class="doc-date">Generated Oct 1, 2025</div></div>
+          <span class="pill pill-neu" style="flex-shrink:0">PDF</span>
+          <span class="doc-action" style="margin-left:12px">View</span>
+        </div>
+        <div class="doc-row">
+          <div class="doc-ico report">📋</div>
+          <div class="doc-info"><div class="doc-name">Community Healing Toolkit v2</div><div class="doc-date">Downloaded Sep 14, 2025</div></div>
+          <span class="pill pill-neu" style="flex-shrink:0">PDF</span>
+          <span class="doc-action" style="margin-left:12px">View</span>
+        </div>
+        <div class="doc-row">
+          <div class="doc-ico report">📝</div>
+          <div class="doc-info"><div class="doc-name">Module 4 — Reflection Notes</div><div class="doc-date">Created Aug 28, 2025</div></div>
+          <span class="pill pill-neu" style="flex-shrink:0">Note</span>
+          <span class="doc-action" style="margin-left:12px">View</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ACHIEVEMENTS ── -->
+    <div class="tab" id="tab-achievements">
+      <div class="section-row"><h2>Achievements &amp; Badges</h2></div>
+      <div class="card card-pad" style="margin-bottom:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="font-size:1.4rem;">⭐</div>
+        <div style="flex:1">
+          <div style="font-family:'DM Serif Display',Georgia,serif;font-size:0.95rem;font-weight:400">3 Badges Earned</div>
+          <div style="font-size:0.7rem;color:var(--fg-3);margin-top:3px">Keep learning to unlock more milestones</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <div style="height:4px;width:90px;background:var(--line);border-radius:99px;overflow:hidden;"><div style="width:43%;height:100%;background:var(--gold);border-radius:99px"></div></div>
+          <span style="font-size:0.68rem;color:var(--fg-3)">3 of 7</span>
+        </div>
+      </div>
+
+      <div class="section-row"><h2>Earned</h2></div>
+      <div class="badge-grid" style="margin-bottom:24px;">
+        <div class="badge-card"><div class="badge-em">🌱</div><div class="badge-name">First Step</div><div class="badge-desc">Completed your first lesson</div><span class="pill pill-em">Earned</span></div>
+        <div class="badge-card"><div class="badge-em">🔥</div><div class="badge-name">7-Day Streak</div><div class="badge-desc">Logged in 7 days in a row</div><span class="pill pill-em">Earned</span></div>
+        <div class="badge-card"><div class="badge-em">💬</div><div class="badge-name">First Post</div><div class="badge-desc">Started a discussion thread</div><span class="pill pill-em">Earned</span></div>
+      </div>
+
+      <div class="section-row"><h2>Locked</h2></div>
+      <div class="badge-grid">
+        <div class="badge-card locked"><div class="badge-em">🏅</div><div class="badge-name">First Certificate</div><div class="badge-desc">Complete a full course</div><span class="pill pill-neu">In Progress</span></div>
+        <div class="badge-card locked"><div class="badge-em">📚</div><div class="badge-name">Deep Learner</div><div class="badge-desc">Complete 3 full courses</div><span class="pill pill-neu">Locked</span></div>
+        <div class="badge-card locked"><div class="badge-em">🌿</div><div class="badge-name">Matrilineal Scholar</div><div class="badge-desc">Complete the Matrilineal Track</div><span class="pill pill-neu">Locked</span></div>
+        <div class="badge-card locked"><div class="badge-em">🌍</div><div class="badge-name">Community Pillar</div><div class="badge-desc">Post in 10 discussions</div><span class="pill pill-neu">Locked</span></div>
+      </div>
+    </div>
+
+    <!-- ── DISCUSSION ── -->
+    <div class="tab" id="tab-discussion">
+      <div class="section-row"><h2>Discussion</h2><button class="btn-em" style="height:32px;padding:0 14px;font-size:0.73rem">+ New Thread</button></div>
+      <div class="filter-row" style="margin-bottom:16px;">
+        <div class="filter-chip on">All Threads</div>
+        <div class="filter-chip">My Courses</div>
+        <div class="filter-chip">Announcements</div>
+        <div class="filter-chip">General</div>
+      </div>
+      <div class="card card-pad">
+        <div class="thread-row">
+          <div class="thread-av">AC</div>
+          <div class="thread-body">
+            <div class="thread-course">Foundations of Restorative Practice</div>
+            <div class="thread-title">How do you handle a community member who resists the restorative circle process?</div>
+            <div class="thread-prev">Dr. Cole replied: "Great question — I usually start by…"</div>
+            <div class="thread-meta">Dr. Amara Cole · 12 replies · 3 new</div>
+          </div>
+          <div class="thread-right"><div class="thread-time">2h ago</div><div class="unread-pip"></div></div>
+        </div>
+        <div class="thread-row">
+          <div class="thread-av">NO</div>
+          <div class="thread-body">
+            <div class="thread-course">Matrilineal Genealogy Research</div>
+            <div class="thread-title">Which DNA testing services have the best African diaspora databases?</div>
+            <div class="thread-prev">Janelle S. replied: "I've had the best results with…"</div>
+            <div class="thread-meta">Nia Okafor · 8 replies · 1 new</div>
+          </div>
+          <div class="thread-right"><div class="thread-time">Yesterday</div><div class="unread-pip"></div></div>
+        </div>
+        <div class="thread-row">
+          <div class="thread-av">OI</div>
+          <div class="thread-body">
+            <div class="thread-course">Announcements</div>
+            <div class="thread-title">New Course Drop: Community Sovereignty &amp; Governance — now open</div>
+            <div class="thread-prev">Ologee Institute · Be the first to enroll in our newest program…</div>
+            <div class="thread-meta">Ologee Institute · 2 replies</div>
+          </div>
+          <div class="thread-right"><div class="thread-time">3 days ago</div></div>
+        </div>
+        <div class="thread-row">
+          <div class="thread-av">VG</div>
+          <div class="thread-body">
+            <div class="thread-course">Healing-Centered Community Work</div>
+            <div class="thread-title">Share your healing practice — what's one ritual that grounds you?</div>
+            <div class="thread-prev">24 members have shared. Join the conversation.</div>
+            <div class="thread-meta">Vetra Griffin · 24 replies</div>
+          </div>
+          <div class="thread-right"><div class="thread-time">1 week ago</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICATIONS ── -->
+    <div class="tab" id="tab-notifications">
+      <div class="section-row"><h2>Notifications</h2><span class="see-all">Mark all read</span></div>
+      <div class="card card-pad">
+        <div class="notif-row">
+          <div class="notif-pip new"></div>
+          <div class="notif-body"><div class="notif-title">Certificate Ready — Healing-Centered Community Work</div><div class="notif-sub">You've completed the course. Claim your certificate in My Documents.</div></div>
+          <div class="notif-time">2h ago</div>
+        </div>
+        <div class="notif-row">
+          <div class="notif-pip new"></div>
+          <div class="notif-body"><div class="notif-title">New Reply in Discussion</div><div class="notif-sub">Dr. Amara Cole replied to your thread in <em>Foundations of Restorative Practice</em>.</div></div>
+          <div class="notif-time">3h ago</div>
+        </div>
+        <div class="notif-row">
+          <div class="notif-pip new"></div>
+          <div class="notif-body"><div class="notif-title">Badge Unlocked — 7-Day Streak 🔥</div><div class="notif-sub">You've logged in 7 days in a row. Keep the momentum going.</div></div>
+          <div class="notif-time">Yesterday</div>
+        </div>
+        <div class="notif-row">
+          <div class="notif-pip new"></div>
+          <div class="notif-body"><div class="notif-title">New Course — Community Sovereignty &amp; Governance</div><div class="notif-sub">Ologee Institute just published a new course with Vetra Griffin. Early enrollment is open.</div></div>
+          <div class="notif-time">3 days ago</div>
+        </div>
+        <div class="notif-row">
+          <div class="notif-pip new"></div>
+          <div class="notif-body"><div class="notif-title">Upcoming Live Session — Matrilineal Genealogy</div><div class="notif-sub">Nia Okafor is hosting a live Q&amp;A on Oct 20 at 6 PM ET. Register to attend.</div></div>
+          <div class="notif-time">4 days ago</div>
+        </div>
+        <div class="notif-row">
+          <div class="notif-pip read"></div>
+          <div class="notif-body"><div class="notif-title">Module Completed — Restorative Practice, Module 2</div><div class="notif-sub">Great work! You're halfway through Foundations of Restorative Practice.</div></div>
+          <div class="notif-time">1 week ago</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PROFILE ── -->
+    <div class="tab" id="tab-profile">
+      <div class="section-row"><h2>My Profile</h2></div>
+      <div class="card card-pad" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap;">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--emerald);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:0.02em;">JS</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'DM Serif Display',Georgia,serif;font-size:1rem">Janelle Stevens</div>
+            <div style="font-size:0.68rem;color:var(--fg-3);margin-top:3px">Learner · Transitional Care PCCS · Member since Aug 2025</div>
+          </div>
+          <button class="btn-ghost">Change Photo</button>
+        </div>
+        <div class="field-grid">
+          <div><div class="field-lbl">First Name</div><input class="field-inp" value="Janelle"></div>
+          <div><div class="field-lbl">Last Name</div><input class="field-inp" value="Stevens"></div>
+          <div class="fg-full"><div class="field-lbl">Email</div><input class="field-inp" type="email" value="janelle.s@tcpcs.org"></div>
+          <div><div class="field-lbl">Phone</div><input class="field-inp" type="tel" value="(404) 555-0192"></div>
+          <div><div class="field-lbl">Organization</div><input class="field-inp" value="Transitional Care PCCS" readonly style="opacity:.55;cursor:default"></div>
+          <div class="fg-full"><div class="field-lbl">Bio</div><textarea class="field-inp" rows="3" style="resize:vertical">Community health worker and restorative practice advocate. Passionate about healing-centered approaches to care.</textarea></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;">
+          <button class="btn-ghost">Discard</button>
+          <button class="btn-em">Save Changes</button>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div class="eyebrow" style="margin-bottom:14px">Notification Preferences</div>
+        <div class="toggle-row">
+          <div class="toggle-text"><div class="tl">New course announcements</div><div class="td">When new courses are published</div></div>
+          <div class="toggle on"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-text"><div class="tl">Discussion replies</div><div class="td">When someone replies to your threads</div></div>
+          <div class="toggle on"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-text"><div class="tl">Achievement unlocks</div><div class="td">Badges and milestone notifications</div></div>
+          <div class="toggle off"><div class="toggle-knob"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUPPORT ── -->
+    <div class="tab" id="tab-support">
+      <div class="section-row"><h2>Contact Support</h2></div>
+      <div class="support-grid">
+        <div class="support-card"><div class="support-ico">💬</div><div class="support-title">Live Chat</div><div class="support-desc">Chat with our team. Available weekdays 9 AM – 6 PM ET.</div><div class="support-cta">Start a chat →</div></div>
+        <div class="support-card"><div class="support-ico">📧</div><div class="support-title">Email Support</div><div class="support-desc">Send a message and we'll respond within 1 business day.</div><div class="support-cta">support@ologee.org</div></div>
+        <div class="support-card"><div class="support-ico">📖</div><div class="support-title">Help Center</div><div class="support-desc">Browse FAQs and guides for common questions.</div><div class="support-cta">Browse articles →</div></div>
+        <div class="support-card"><div class="support-ico">🐛</div><div class="support-title">Report an Issue</div><div class="support-desc">Found a bug or technical problem? Let us know.</div><div class="support-cta">Submit a report →</div></div>
+      </div>
+      <div class="card card-pad">
+        <div class="eyebrow" style="margin-bottom:14px">Send a Message</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div><div class="field-lbl">Subject</div><input class="field-inp" placeholder="Briefly describe your issue…"></div>
+          <div><div class="field-lbl">Message</div><textarea class="field-inp" rows="4" placeholder="Tell us what's happening…" style="resize:vertical"></textarea></div>
+          <div style="display:flex;justify-content:flex-end;"><button class="btn-em">Send Message</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /canvas -->
+</div><!-- /main -->
+
+<script>
+const TAB_TITLES = {
+  overview:'Good evening, <em>Janelle</em>',
+  courses:'My Courses',
+  browse:'Browse Courses & Programs',
+  saved:'Saved Items',
+  docs:'My Documents',
+  achievements:'Achievements & Badges',
+  discussion:'Discussion',
+  notifications:'Notifications',
+  profile:'My Profile',
+  support:'Contact Support',
+};
+
+function go(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const t = document.getElementById('tab-' + id);
+  if (t) t.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+  } else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if ((n.getAttribute('onclick') || '').includes("'" + id + "'")) n.classList.add('active');
+    });
+  }
+  document.getElementById('tb-title').innerHTML = TAB_TITLES[id] || '';
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// filter chips toggle
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    const siblings = this.closest('.filter-row').querySelectorAll('.filter-chip');
+    siblings.forEach(c => c.classList.remove('on'));
+    this.classList.add('on');
+  });
+});
+</script>
+
+</body></html>
